@@ -1,0 +1,2077 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ПРОТОКОЛ: ДЕНЬ НАРОДЖЕННЯ СТЕШИ</title>
+    <style>
+        :root {
+            --bg-dark: #030712;
+            --bg-panel: rgba(10, 15, 30, 0.94);
+            --blue-main: #00f0ff;
+            --blue-light: #70d6ff;
+            --blue-glow: rgba(0, 240, 255, 0.55);
+            --blue-dim: rgba(0, 240, 255, 0.12);
+            --accent-navy: #1e3a8a;
+            --text-color: #e0f2fe;
+            --pink-heart: #ff2a85;
+            --pink-glow: rgba(255, 42, 133, 0.75);
+            --font-mono: 'Courier New', Courier, 'Lucida Console', monospace;
+            --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-dark);
+            color: var(--text-color);
+            font-family: var(--font-mono);
+            overflow: hidden;
+            position: relative;
+        }
+
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 1s ease;
+            pointer-events: none;
+        }
+
+        #matrix-canvas.active {
+            opacity: 0.35;
+        }
+
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 25;
+            pointer-events: none;
+        }
+
+        .crt-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.4) 50%
+            );
+            background-size: 100% 4px;
+            z-index: 50;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        #app-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stage {
+            position: absolute;
+            inset: 0;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .stage.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .cyber-btn {
+            background: rgba(0, 240, 255, 0.08);
+            color: var(--blue-light);
+            border: 2px solid var(--blue-main);
+            padding: 16px 32px;
+            font-family: var(--font-mono);
+            font-size: clamp(1rem, 3vw, 1.25rem);
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            border-radius: 6px;
+            box-shadow: 0 0 15px var(--blue-glow), inset 0 0 10px rgba(0, 240, 255, 0.2);
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .cyber-btn:hover {
+            background: var(--blue-main);
+            color: #030712;
+            box-shadow: 0 0 30px var(--blue-main), 0 0 60px var(--blue-glow);
+            transform: translateY(-2px);
+        }
+
+        .cyber-btn:active {
+            transform: scale(0.96);
+        }
+
+        #intro-heart-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: heartEntrance 2.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        .pink-heart-svg {
+            width: clamp(130px, 32vw, 210px);
+            height: clamp(130px, 32vw, 210px);
+            fill: var(--pink-heart);
+            filter: drop-shadow(0 0 25px var(--pink-glow)) drop-shadow(0 0 55px rgba(255, 105, 180, 0.65));
+            animation: heartBeat 0.72s ease-in-out infinite;
+        }
+
+        @keyframes heartBeat {
+            0%, 100% { transform: scale(1); }
+            25% { transform: scale(1.18); }
+            45% { transform: scale(0.98); }
+            65% { transform: scale(1.12); }
+        }
+
+        @keyframes heartEntrance {
+            0% { opacity: 0; transform: scale(0.3); }
+            20% { opacity: 1; transform: scale(1); }
+            80% { opacity: 1; transform: scale(1); filter: blur(0); }
+            100% { opacity: 0; transform: scale(1.6); filter: blur(8px); }
+        }
+
+        #countdown-display {
+            display: none;
+            font-size: clamp(7rem, 25vw, 15rem);
+            font-weight: 900;
+            color: var(--blue-main);
+            position: relative;
+            line-height: 1;
+            text-shadow: 0 0 25px var(--blue-glow);
+        }
+
+        .glitch-tick {
+            animation: pulseTick 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        .screen-shake {
+            animation: screenShake 0.32s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes screenShake {
+            10%, 90% { transform: translate3d(-4px, 2px, 0); }
+            20%, 80% { transform: translate3d(6px, -3px, 0); }
+            30%, 50%, 70% { transform: translate3d(-8px, 4px, 0); }
+            40%, 60% { transform: translate3d(8px, -2px, 0); }
+        }
+
+        @keyframes pulseTick {
+            0% { transform: scale(0.4); opacity: 0; filter: blur(8px); }
+            25% { transform: scale(1.15); opacity: 1; filter: blur(0); }
+            80% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0; }
+        }
+
+        .terminal-box {
+            width: 100%;
+            max-width: 720px;
+            background: rgba(10, 15, 30, 0.9);
+            border: 1px solid var(--blue-main);
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.25);
+            border-radius: 10px;
+            padding: 24px;
+            backdrop-filter: blur(4px);
+        }
+
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 18px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--blue-dim);
+            font-size: 0.85rem;
+            color: var(--blue-light);
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--blue-main);
+            box-shadow: 0 0 8px var(--blue-main);
+        }
+
+        .terminal-lines {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            font-size: clamp(0.95rem, 2.5vw, 1.15rem);
+            line-height: 1.5;
+            min-height: 180px;
+        }
+
+        .term-line {
+            color: var(--blue-light);
+            text-shadow: 0 0 8px rgba(0, 240, 255, 0.3);
+            word-break: break-word;
+        }
+
+        .term-line.error-line {
+            color: #38bdf8;
+            font-weight: bold;
+            text-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
+            margin-top: 8px;
+            padding: 10px;
+            border-left: 3px solid #38bdf8;
+            background: rgba(56, 189, 248, 0.1);
+        }
+
+        .game-panel {
+            width: 100%;
+            max-width: 760px;
+            height: 82vh;
+            max-height: 620px;
+            background: rgba(10, 15, 30, 0.92);
+            border: 1px solid var(--blue-main);
+            border-radius: 12px;
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.25);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .game-header {
+            padding: 16px 20px;
+            background: rgba(0, 240, 255, 0.08);
+            border-bottom: 1px solid var(--blue-dim);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            z-index: 5;
+        }
+
+        .game-title {
+            font-size: clamp(1rem, 2.8vw, 1.2rem);
+            color: var(--blue-main);
+            font-weight: bold;
+        }
+
+        .game-badge {
+            background: var(--blue-main);
+            color: #030712;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        .game-desc {
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            color: var(--blue-light);
+            background: rgba(3, 7, 18, 0.5);
+            text-align: center;
+            z-index: 5;
+        }
+
+        #arena-age {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+
+        .floating-num {
+            position: absolute;
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: 1.5px solid var(--blue-main);
+            background: rgba(10, 15, 30, 0.92);
+            color: var(--blue-light);
+            font-size: clamp(1.2rem, 3.5vw, 1.6rem);
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+            transition: transform 0.1s, background 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 56px;
+            min-height: 48px;
+        }
+
+        .floating-num:hover {
+            background: rgba(0, 240, 255, 0.2);
+            box-shadow: 0 0 20px var(--blue-main);
+        }
+
+        .floating-num:active {
+            transform: scale(0.85);
+        }
+
+        .toast-msg {
+            position: absolute;
+            transform: translate(-50%, -100%);
+            background: #030712;
+            border: 1px solid var(--blue-light);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 20;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
+            animation: floatUpFade 1.3s ease-out forwards;
+        }
+
+        .toast-msg.success {
+            border-color: #38bdf8;
+            color: #38bdf8;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
+        }
+
+        @keyframes floatUpFade {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(0.9); }
+            20% { opacity: 1; transform: translate(-50%, -90%) scale(1.05); }
+            100% { opacity: 0; transform: translate(-50%, -160%) scale(1); }
+        }
+
+        #easter-egg-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(3, 7, 18, 0.92);
+            backdrop-filter: blur(6px);
+            z-index: 90;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            cursor: pointer;
+            animation: glitchFlashBg 0.35s ease;
+        }
+
+        #easter-egg-overlay.active {
+            display: flex;
+        }
+
+        @keyframes glitchFlashBg {
+            0% { background: rgba(0, 240, 255, 0.4); }
+            30% { background: rgba(30, 58, 138, 0.5); }
+            100% { background: rgba(3, 7, 18, 0.92); }
+        }
+
+        .easter-egg-box {
+            max-width: 90vw;
+            max-height: 85vh;
+            background: rgba(10, 15, 30, 0.95);
+            border: 2px solid var(--blue-main);
+            box-shadow: 0 0 35px var(--blue-main), -4px 0 0 #0284c7, 4px 0 0 #38bdf8;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            text-align: center;
+            animation: cardAppear 0.25s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        .easter-egg-alert {
+            color: #38bdf8;
+            font-weight: bold;
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.8);
+        }
+
+        .easter-egg-img {
+            max-width: 100%;
+            max-height: 55vh;
+            border-radius: 8px;
+            border: 1px solid var(--blue-light);
+            object-fit: contain;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+        }
+
+        #arena-charisma {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px;
+            overflow: hidden;
+        }
+
+        .charisma-meter-wrap {
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 5;
+        }
+
+        .charisma-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.95rem;
+            color: var(--blue-light);
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 26px;
+            background: rgba(3, 7, 18, 0.8);
+            border: 1.5px solid var(--blue-main);
+            border-radius: 13px;
+            padding: 3px;
+            overflow: hidden;
+            box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.3);
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #00f0ff, #38bdf8, #1e3a8a);
+            border-radius: 10px;
+            box-shadow: 0 0 15px var(--blue-main);
+            transition: width 0.08s linear;
+        }
+
+        #evasive-area {
+            flex: 1;
+            width: 100%;
+            position: relative;
+            margin-top: 15px;
+        }
+
+        #charisma-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 14px 24px;
+            font-size: 1rem;
+            white-space: nowrap;
+            transition: top 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), left 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes cardAppear {
+            0% { opacity: 0; transform: scale(0.85) translateY(20px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .access-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border: 1px solid var(--blue-main);
+            color: var(--blue-main);
+            background: rgba(0, 240, 255, 0.08);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
+        }
+
+        .holo-capsule-container {
+            width: 100%;
+            max-width: 650px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            animation: cardAppear 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        .holo-card {
+            width: 100%;
+            background: rgba(10, 15, 30, 0.95);
+            border: 2px solid var(--blue-main);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 0 45px rgba(0, 240, 255, 0.35), inset 0 0 25px rgba(0, 240, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .holo-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(0,240,255,0.05) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .holo-text {
+            font-size: clamp(1.1rem, 3.2vw, 1.4rem);
+            color: #fff;
+            line-height: 1.6;
+            text-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+            font-family: var(--font-mono);
+        }
+
+        .shell-game-panel {
+            width: 100%;
+            max-width: 760px;
+            min-height: 440px;
+            background: rgba(10, 15, 30, 0.94);
+            border: 1px solid var(--blue-main);
+            border-radius: 14px;
+            box-shadow: 0 0 35px rgba(0, 240, 255, 0.25);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            backdrop-filter: blur(6px);
+        }
+
+        .shell-status-text {
+            font-size: clamp(1rem, 2.8vw, 1.25rem);
+            color: var(--blue-light);
+            text-align: center;
+            min-height: 1.6em;
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+        }
+
+        .cups-stage {
+            position: relative;
+            width: 100%;
+            max-width: 560px;
+            height: 230px;
+            margin: 10px auto;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .cup-slot {
+            position: absolute;
+            bottom: 16px;
+            width: 30%;
+            max-width: 140px;
+            height: 180px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            transition: left 0.45s cubic-bezier(0.34, 1.25, 0.64, 1);
+            cursor: default;
+        }
+
+        .cup-slot.clickable {
+            cursor: pointer;
+        }
+
+        .cup-slot.clickable:hover .cyber-cup {
+            filter: drop-shadow(0 0 18px #38bdf8);
+            border-color: #38bdf8;
+        }
+
+        .prize-item {
+            position: absolute;
+            bottom: 8px;
+            width: 72px;
+            height: 72px;
+            object-fit: contain;
+            z-index: 1;
+            filter: drop-shadow(0 0 12px var(--blue-main));
+            pointer-events: none;
+            transition: opacity 0.15s ease;
+        }
+
+        .cyber-cup {
+            position: relative;
+            z-index: 3;
+            width: 100%;
+            height: 142px;
+            opacity: 1;
+            background: linear-gradient(180deg, #1e3a8a 0%, #0f172a 52%, #030712 100%);
+            border: 3px solid #00f0ff;
+            border-top: 6px solid #70d6ff;
+            border-radius: 18px 18px 8px 8px;
+            box-shadow: 0 10px 25px #000000, inset 0 0 18px #1d4ed8;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s, filter 0.2s;
+            transform: translateY(0);
+        }
+
+        .cyber-cup.lifted {
+            transform: translateY(-92px);
+        }
+
+        .cup-stripe {
+            width: 65%;
+            height: 3px;
+            background: #00f0ff;
+            box-shadow: 0 0 8px #00f0ff;
+            border-radius: 2px;
+        }
+
+        .fail-box {
+            width: 100%;
+            max-width: 520px;
+            background: rgba(10, 15, 30, 0.96);
+            border: 2px solid #38bdf8;
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow: 0 0 40px rgba(56, 189, 248, 0.4);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
+            text-align: center;
+            animation: cardAppear 0.35s ease forwards;
+        }
+
+        .fail-img {
+            max-width: 100%;
+            max-height: 260px;
+            border-radius: 10px;
+            border: 1.5px solid var(--blue-main);
+            object-fit: contain;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+        }
+
+        .tg-phone-mockup {
+            width: 100%;
+            max-width: 380px;
+            height: 600px;
+            background: #0e1621;
+            border: 3px solid #2aabee;
+            border-radius: 36px;
+            box-shadow: 0 0 60px rgba(42, 171, 238, 0.6), inset 0 0 25px rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            animation: phoneZoomIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        @keyframes phoneZoomIn {
+            0% { transform: scale(0.6); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .phone-notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 130px;
+            height: 22px;
+            background: #242f3d;
+            border-radius: 0 0 14px 14px;
+            z-index: 25;
+        }
+
+        .phone-header {
+            background: #17212b;
+            padding: 30px 18px 14px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #fff;
+            font-family: var(--font-sans);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            z-index: 5;
+        }
+
+        .phone-avatar {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, #2aabee, #229ed9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 0 12px rgba(42,171,238,0.5);
+        }
+
+        .phone-chat-body {
+            flex: 1;
+            background: #0e1621 radial-gradient(circle at center, #17212b 0%, #0e1621 100%);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tg-bubble {
+            background: #182533;
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 12px 12px 12px 2px;
+            max-width: 85%;
+            min-height: 38px;
+            min-width: 140px;
+            align-self: flex-start;
+            font-family: var(--font-sans);
+            font-size: 0.88rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 4px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: bubbleAppear 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        .tg-bubble.outgoing {
+            background: #2b5278;
+            border-radius: 12px 12px 2px 12px;
+            align-self: flex-end;
+        }
+
+        @keyframes bubbleAppear {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tg-gift-preview {
+            background: rgba(42, 171, 238, 0.12);
+            border: 1.5px solid #2aabee;
+            border-radius: 10px;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .flying-neon-gift {
+            position: absolute;
+            bottom: -90px;
+            right: 30px;
+            width: 72px;
+            height: 72px;
+            z-index: 30;
+            filter: drop-shadow(0 0 20px var(--blue-main)) drop-shadow(0 0 40px #2aabee);
+            animation: epicFlyToChat 1.5s cubic-bezier(0.15, 0.85, 0.35, 1.15) forwards;
+        }
+
+        @keyframes epicFlyToChat {
+            0% {
+                bottom: -90px;
+                right: 30px;
+                transform: scale(1.6) rotate(-45deg);
+                opacity: 0;
+            }
+            30% {
+                opacity: 1;
+            }
+            75% {
+                transform: scale(0.9) rotate(380deg);
+            }
+            100% {
+                bottom: 45%;
+                right: 30%;
+                transform: scale(0.2) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        .offline-card {
+            width: 100%;
+            max-width: 780px;
+            background: rgba(10, 15, 30, 0.95);
+            border: 2px solid var(--blue-main);
+            border-radius: 16px;
+            padding: clamp(24px, 5vw, 44px);
+            box-shadow: 0 0 45px rgba(0, 240, 255, 0.4), inset 0 0 25px rgba(0, 240, 255, 0.12);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+            backdrop-filter: blur(8px);
+            animation: cardAppear 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        .offline-title {
+            font-size: clamp(1.7rem, 5.5vw, 3.1rem);
+            font-weight: 900;
+            color: #fff;
+            letter-spacing: 2px;
+            line-height: 1.2;
+            text-shadow:
+                -3px 0 0 #0284c7,
+                3px 0 0 var(--blue-main),
+                0 0 25px var(--blue-glow);
+        }
+
+        .countdown-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: clamp(8px, 2vw, 16px);
+            width: 100%;
+            max-width: 620px;
+        }
+
+        .time-unit {
+            background: rgba(0, 240, 255, 0.06);
+            border: 1.5px solid var(--blue-main);
+            border-radius: 12px;
+            padding: clamp(12px, 3vw, 20px) 8px;
+            box-shadow: 0 0 18px rgba(0, 240, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .time-num {
+            font-size: clamp(1.6rem, 5vw, 2.8rem);
+            font-weight: 900;
+            color: var(--blue-light);
+            text-shadow: 0 0 12px var(--blue-main);
+            line-height: 1;
+        }
+
+        .time-lbl {
+            font-size: clamp(0.7rem, 2vw, 0.85rem);
+            color: #38bdf8;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .target-date-note {
+            font-size: 0.9rem;
+            color: rgba(112, 214, 255, 0.75);
+            letter-spacing: 1px;
+        }
+
+        @media (max-width: 480px) {
+            .countdown-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <audio id="game-audio" src="1115.MP3" preload="auto"></audio>
+
+    <canvas id="matrix-canvas"></canvas>
+    <canvas id="confetti-canvas"></canvas>
+    <div class="crt-overlay"></div>
+
+    <main id="app-wrapper">
+
+        <section id="stage-1" class="stage active">
+            <div id="intro-heart-wrap">
+                <svg class="pink-heart-svg" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+            </div>
+            <div id="countdown-display" data-num="3">3</div>
+        </section>
+
+        <section id="stage-2" class="stage">
+            <div class="terminal-box">
+                <div class="terminal-header">
+                    <span class="dot"></span>
+                    <span class="dot" style="opacity: 0.6;"></span>
+                    <span class="dot" style="opacity: 0.3;"></span>
+                    <span>ROOT@BIRTHDAY-OS:~# ./init_burmalda.sh</span>
+                </div>
+                <div id="terminal-output" class="terminal-lines"></div>
+            </div>
+        </section>
+
+        <section id="stage-age-input" class="stage">
+            <div class="settings-card" style="background: var(--bg-panel); border: 1px solid var(--blue-main); box-shadow: 0 0 30px rgba(0, 240, 255, 0.35); border-radius: 12px; padding: 22px; width: 100%; max-width: 480px; text-align: center; display: flex; flex-direction: column; gap: 14px;">
+                <h2 style="color: var(--blue-main); font-size: 1.1rem; letter-spacing: 1px;">// НАПІШІ СКОК ЛЄТА, ПУШТА Я НЄ ШАРЮ</h2>
+                <div style="display: flex; justify-content: center;">
+                    <img src="https://i.pinimg.com/736x/83/c5/a1/83c5a1b8059db3fb0311def5097fe5e6.jpg" alt="Мем" style="max-width: 140px; max-height: 120px; border-radius: 8px; border: 1px solid var(--blue-main); object-fit: cover; box-shadow: 0 0 15px rgba(0,240,255,0.3);">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px; text-align: left;">
+                    <label for="input-custom-age" style="font-size: 0.85rem; color: var(--blue-light);">Свій реальний вік:</label>
+                    <input type="number" id="input-custom-age" min="0" max="150" value="0" style="background: rgba(3, 7, 18, 0.75); border: 1px solid rgba(0, 240, 255, 0.5); color: #fff; padding: 10px 12px; border-radius: 6px; font-family: var(--font-mono); font-size: 1.2rem; text-align: center; outline: none;">
+                </div>
+                <div id="age-error-msg" style="color: #ff2a85; font-size: 0.9rem; font-weight: bold; min-height: 1.2em;"></div>
+                <button id="submit-age-btn" class="cyber-btn" style="width: 100%;">
+                    ГАААЗЗУУУУ
+                </button>
+            </div>
+        </section>
+
+        <section id="stage-3-1" class="stage">
+            <div class="game-panel">
+                <div class="game-header">
+                    <span class="game-title">Провірка 1/2: «Зхопи свій вік»</span>
+                    <span id="age-counter" class="game-badge">Зхоплено: 0 / 3</span>
+                </div>
+                <div class="game-desc">
+                    Система сумнівається, шо ти це ти. Клікни по своєму новому віку (<strong id="target-age-hint" style="color: #fff;">18</strong>) рівно 3 рази!
+                </div>
+                <div id="arena-age"></div>
+            </div>
+        </section>
+
+        <div id="easter-egg-overlay" title="Клікні, шоби закрити">
+            <div class="easter-egg-box">
+                <div class="easter-egg-alert">⚠ ЗНАЙДЕНО ПАСХАЛКУ // БІДА В СИСТЕМІ ⚠</div>
+                <img id="easter-egg-img" class="easter-egg-img" src="https://images.glavred.info/2020_09/1600248548-1833.jpg?r=48328" alt="Пасхалка 1488">
+                <button id="close-easter-egg-btn" class="cyber-btn btn-small">Вернутися до пошуку [X]</button>
+            </div>
+        </div>
+
+        <section id="stage-3-2" class="stage">
+            <div class="game-panel">
+                <div class="game-header">
+                    <span class="game-title">Провірка 2/2: «Заряд бурмалди»</span>
+                    <span id="charisma-status" class="game-badge">НЕСТАБІЛЬНО</span>
+                </div>
+                <div class="game-desc">
+                    Концентрація бурмалди зашкалює! Швидко тикай по кнопці підзарядки, поки шкала не впала до нуля.
+                </div>
+                <div id="arena-charisma">
+                    <div class="charisma-meter-wrap">
+                        <div class="charisma-label">
+                            <span>Заряд бурмалди:</span>
+                            <span id="charisma-percent">0%</span>
+                        </div>
+                        <div class="progress-track">
+                            <div id="charisma-bar" class="progress-fill"></div>
+                        </div>
+                    </div>
+                    <div id="evasive-area">
+                        <button id="charisma-btn" class="cyber-btn">💖 Обурмалдить +18%</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="stage-4" class="stage">
+            <div class="holo-capsule-container">
+                <div class="access-badge">● Голографічний архів // Успішно розшифровано</div>
+                <div class="holo-card">
+                    <h1 style="font-size: clamp(1.5rem, 4vw, 2.2rem); color: #d4af37; font-family: var(--font-mono);">З др Стешка</h1>
+                    <p class="holo-text" id="envelope-letter-text">
+                        Поздравляю тя с днём наступления полной уголовной ответственности, желаю мотивации и ипровизации и всего хорошего, шоколада горячего и чо там еще.
+                    </p>
+                </div>
+                <button id="to-gift-stage-btn" class="cyber-btn" style="width: 100%;">
+                    🎁 Отримати подарунок
+                </button>
+            </div>
+        </section>
+
+        <section id="stage-5" class="stage">
+            <div id="gift-intro-view" style="text-align: center; display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 16px;">
+                <div class="access-badge">● Термінал видачі призів</div>
+                <h2 class="final-title" style="font-size: clamp(1.5rem, 4.5vw, 2.3rem);">Випробуй свій фарт!</h2>
+                <button id="play-gift-btn" class="cyber-btn" style="font-size: clamp(1.1rem, 3.2vw, 1.4rem); padding: 20px 38px;">
+                    Запустити розіграш
+                </button>
+            </div>
+
+            <div id="shell-game-view" class="shell-game-panel" style="display: none;">
+                <div class="game-header" style="width: 100%; border-radius: 8px;">
+                    <span class="game-title">Міні-игра: «Вгадай, де подарок»</span>
+                    <span class="game-badge">3 стакана</span>
+                </div>
+
+                <div id="shell-status" class="shell-status-text">Слідкуй уважно за стаканами...</div>
+
+                <div id="cups-stage" class="cups-stage"></div>
+            </div>
+
+            <div id="shell-fail-view" class="fail-box" style="display: none;">
+                <div class="easter-egg-alert" style="font-size: 1.2rem;">✖ Мимо! Цей стакан пустий ✖</div>
+                <img
+                    class="fail-img"
+                    src="https://i.pinimg.com/736x/61/45/1b/61451b1525aa4cef18ffc5259ad7f583.jpg"
+                    alt="Помилка вибору"
+                    onerror="this.src='https://placehold.co/400x300/0a0f1e/00f0ff?text=%D0%9C%D0%B8%D0%BC%D0%BE!'"
+                >
+                <button id="retry-shell-btn" class="cyber-btn">
+                    Попробувати ще раз
+                </button>
+            </div>
+
+            <div id="tg-delivery-view" style="display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; position: relative;">
+                <div class="tg-phone-mockup">
+                    <div class="phone-notch"></div>
+                    <div class="phone-header">
+                        <div class="phone-avatar">💋</div>
+                        <div style="font-family: var(--font-sans);">
+                            <div style="font-weight: bold; font-size: 0.95rem;">стешік💋</div>
+                            <div style="font-size: 0.72rem; color: #2AABEE;">у мережі</div>
+                        </div>
+                    </div>
+                    <div class="phone-chat-body" id="phone-chat-body">
+                        <div class="tg-bubble"></div>
+                        <div class="tg-bubble outgoing" style="animation-delay: 0.4s;"></div>
+                        <div class="tg-bubble" style="animation-delay: 0.9s;"></div>
+                        <img id="flying-phone-gift" class="flying-neon-gift" src="https://cdn.pixabay.com/photo/2019/12/16/15/47/vector-4699584_960_720.png" alt="Gift">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="stage-author-rating" class="stage">
+            <div class="settings-card" style="background: var(--bg-panel); border: 1px solid var(--blue-main); box-shadow: 0 0 30px rgba(0, 240, 255, 0.35); border-radius: 12px; padding: 24px; width: 100%; max-width: 540px; text-align: center; display: flex; flex-direction: column; gap: 14px;">
+                <div class="access-badge" style="border-color: var(--blue-main); color: var(--blue-main); background: rgba(0,240,255,0.08);">
+                    ● Фінальний аудит автора
+                </div>
+                <h2 style="color: #fff; font-size: 1.3rem;">Оціні крутість автора: <span style="color: var(--blue-main);">MaksimBIGBALLS</span></h2>
+                <p style="color: var(--blue-light); font-size: 0.88rem;">Перед фіналом постав чесні бали по полосочкам:</p>
+                
+                <div style="display: flex; flex-direction: column; gap: 4px; text-align: left;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--blue-light);">
+                        <span>1. Стиль кодописання:</span>
+                        <span id="val-crit-1" style="color: #38bdf8; font-weight: bold;">100/100</span>
+                    </div>
+                    <input type="range" id="crit-1" min="1" max="100" value="100" style="accent-color: var(--blue-main); cursor: pointer;">
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 4px; text-align: left;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--blue-light);">
+                        <span>2. Гумор і харизма:</span>
+                        <span id="val-crit-2" style="color: #38bdf8; font-weight: bold;">100/100</span>
+                    </div>
+                    <input type="range" id="crit-2" min="1" max="100" value="100" style="accent-color: var(--blue-main); cursor: pointer;">
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 4px; text-align: left;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--blue-light);">
+                        <span>3. Масштаб особистості BIGBALLS:</span>
+                        <span id="val-crit-3" style="color: #38bdf8; font-weight: bold;">100/100</span>
+                    </div>
+                    <input type="range" id="crit-3" min="1" max="100" value="100" style="accent-color: var(--blue-main); cursor: pointer;">
+                </div>
+
+                <button id="submit-rating-btn" class="cyber-btn" style="width: 100%; margin-top: 8px;">
+                    Зберегти оцінку автора [Далі]
+                </button>
+            </div>
+        </section>
+
+        <div id="negative-rating-overlay" style="position: fixed; inset: 0; background: rgba(3, 7, 18, 0.94); backdrop-filter: blur(6px); z-index: 95; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center;">
+            <div class="easter-egg-box" style="max-width: 440px; display: flex; flex-direction: column; gap: 14px; align-items: center;">
+                <div style="color: #38bdf8; font-weight: bold; font-size: 1.3rem; letter-spacing: 1px; text-shadow: 0 0 10px rgba(56, 189, 248, 0.8);">А за шо нэгатів?</div>
+                <img src="https://i.pinimg.com/736x/61/45/1b/61451b1525aa4cef18ffc5259ad7f583.jpg" alt="А за шо негатив" style="max-width: 100%; max-height: 50vh; border-radius: 8px; border: 1px solid var(--blue-light); object-fit: contain; box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);">
+                <button id="close-negative-btn" class="cyber-btn btn-small" style="width: 100%;">Виправити оцінку [ОК]</button>
+            </div>
+        </div>
+
+        <section id="stage-6" class="stage">
+            <div class="offline-card">
+                <div class="access-badge" style="border-color: #38bdf8; color: #38bdf8; background: rgba(56, 189, 248, 0.1);">
+                    ● Signal lost // 21.11.2027
+                </div>
+
+                <h1 class="offline-title">САЙТ НЕДОСТУПНИЙ, СВЯЗЬ!</h1>
+
+                <div class="countdown-grid">
+                    <div class="time-unit">
+                        <div id="cd-days" class="time-num">000</div>
+                        <div class="time-lbl">Днів</div>
+                    </div>
+                    <div class="time-unit">
+                        <div id="cd-hours" class="time-num">00</div>
+                        <div class="time-lbl">Годин</div>
+                    </div>
+                    <div class="time-unit">
+                        <div id="cd-minutes" class="time-num">00</div>
+                        <div class="time-lbl">Хвилин</div>
+                    </div>
+                    <div class="time-unit">
+                        <div id="cd-seconds" class="time-num">00</div>
+                        <div class="time-lbl">Секунд</div>
+                    </div>
+                </div>
+
+                <div class="target-date-note">
+                    Відновлення з'єднання: 21 листопада 2027 року, 00:00
+                </div>
+
+                <button id="full-restart-btn" class="cyber-btn btn-small btn-ghost" style="margin-top: 8px;">
+                    ↻ Перезапустити протокол
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const CONFIG = {
+            name: "Стеша",
+            age: 18,
+            message: "Поздравляю тя с днём наступления полной уголовной ответственности, желаю мотивации и ипровизации и всего хорошего, шоколада горячего и чо там еще."
+        };
+
+        class CyberAudio {
+            constructor() {
+                this.ctx = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) {
+                        this.ctx = new AudioCtx();
+                    }
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            playBeep(freq = 880, duration = 0.14, type = 'sine', volume = 0.25) {
+                try {
+                    this.init();
+                    if (!this.ctx) return;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(freq * 0.85, this.ctx.currentTime + duration);
+                    gain.gain.setValueAtTime(volume, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch (e) {}
+            }
+
+            playTick() {
+                this.playBeep(1200 + Math.random() * 600, 0.03, 'triangle', 0.04);
+            }
+
+            playError() {
+                this.playBeep(160, 0.35, 'sawtooth', 0.25);
+                setTimeout(() => this.playBeep(120, 0.4, 'sawtooth', 0.25), 140);
+            }
+
+            playHit() {
+                this.playBeep(660, 0.09, 'sine', 0.2);
+                setTimeout(() => this.playBeep(990, 0.14, 'sine', 0.2), 70);
+            }
+
+            playMiss() {
+                this.playBeep(240, 0.15, 'square', 0.12);
+            }
+
+            playVictory() {
+                const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+                notes.forEach((freq, idx) => {
+                    setTimeout(() => {
+                        this.playBeep(freq, 0.55, 'triangle', 0.18);
+                    }, idx * 90);
+                });
+            }
+        }
+
+        const audio = new CyberAudio();
+
+        const matrixCanvas = document.getElementById('matrix-canvas');
+        const mCtx = matrixCanvas.getContext('2d');
+        let matrixInterval = null;
+        let drops = [];
+        const matrixChars = '01#@$%&*<>[]{}アイウエオカキクケコサシスセソタチツテト0101';
+
+        function resizeMatrix() {
+            matrixCanvas.width = window.innerWidth;
+            matrixCanvas.height = window.innerHeight;
+            const fontSize = 16;
+            const columns = Math.floor(matrixCanvas.width / fontSize);
+            drops = Array(columns).fill(1).map(() => Math.random() * -50);
+        }
+
+        function startMatrix() {
+            resizeMatrix();
+            matrixCanvas.classList.add('active');
+            if (matrixInterval) clearInterval(matrixInterval);
+
+            matrixInterval = setInterval(() => {
+                mCtx.fillStyle = 'rgba(3, 7, 18, 0.08)';
+                mCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+                mCtx.font = '16px monospace';
+                for (let i = 0; i < drops.length; i++) {
+                    const text = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+                    mCtx.fillStyle = Math.random() > 0.85 ? '#ffffff' : (Math.random() > 0.4 ? '#00f0ff' : '#70d6ff');
+                    mCtx.fillText(text, i * 16, drops[i] * 16);
+
+                    if (drops[i] * 16 > matrixCanvas.height && Math.random() > 0.975) {
+                        drops[i] = 0;
+                    }
+                    drops[i]++;
+                }
+            }, 45);
+        }
+
+        function stopMatrix() {
+            matrixCanvas.classList.remove('active');
+            if (matrixInterval) clearInterval(matrixInterval);
+        }
+
+        window.addEventListener('resize', resizeMatrix);
+
+        const stages = {
+            s1: document.getElementById('stage-1'),
+            s2: document.getElementById('stage-2'),
+            sAgeInput: document.getElementById('stage-age-input'),
+            s3_1: document.getElementById('stage-3-1'),
+            s3_2: document.getElementById('stage-3-2'),
+            s4: document.getElementById('stage-4'),
+            s5: document.getElementById('stage-5'),
+            sAuthorRating: document.getElementById('stage-author-rating'),
+            s6: document.getElementById('stage-6')
+        };
+
+        function switchStage(stageKey) {
+            Object.values(stages).forEach(el => el.classList.remove('active'));
+            if (stages[stageKey]) {
+                stages[stageKey].classList.add('active');
+            }
+        }
+
+        function applyConfigToDOM() {
+            document.getElementById('target-age-hint').textContent = CONFIG.age;
+            document.getElementById('envelope-letter-text').textContent = CONFIG.message;
+            document.getElementById('input-custom-age').value = 0;
+        }
+
+        applyConfigToDOM();
+
+        const introHeartWrap = document.getElementById('intro-heart-wrap');
+        const countdownDisplay = document.getElementById('countdown-display');
+        const appWrapper = document.getElementById('app-wrapper');
+        let isRunning = false;
+        let introTimer = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (isRunning) return;
+            isRunning = true;
+            audio.init();
+
+            introHeartWrap.style.display = 'flex';
+            introHeartWrap.style.animation = 'none';
+            void introHeartWrap.offsetWidth;
+            introHeartWrap.style.animation = 'heartEntrance 2.3s cubic-bezier(0.22, 1, 0.36, 1) forwards';
+            countdownDisplay.style.display = 'none';
+
+            audio.playBeep(528, 0.25, 'sine', 0.16);
+            setTimeout(() => {
+                if (isRunning) audio.playBeep(660, 0.28, 'sine', 0.16);
+            }, 680);
+
+            introTimer = setTimeout(() => {
+                if (!isRunning) return;
+                introHeartWrap.style.display = 'none';
+                countdownDisplay.style.display = 'block';
+
+                let count = 3;
+
+                function runTick() {
+                    if (!isRunning) return;
+                    if (count > 0) {
+                        countdownDisplay.textContent = count;
+                        countdownDisplay.setAttribute('data-num', count);
+                        countdownDisplay.classList.remove('glitch-tick');
+                        void countdownDisplay.offsetWidth;
+                        countdownDisplay.classList.add('glitch-tick');
+
+                        appWrapper.classList.remove('screen-shake');
+                        void appWrapper.offsetWidth;
+                        appWrapper.classList.add('screen-shake');
+
+                        const pitch = count === 3 ? 660 : (count === 2 ? 880 : 1174);
+                        audio.playBeep(pitch, 0.18, 'sine', 0.3);
+
+                        count--;
+                        setTimeout(runTick, 950);
+                    } else {
+                        countdownDisplay.style.display = 'none';
+                        startStage2();
+                    }
+                }
+
+                runTick();
+            }, 2250);
+        });
+
+        const terminalOutput = document.getElementById('terminal-output');
+        const scrambleGlyphs = '#@$%&*0101_<>[]{}~^';
+
+        function scrambleTextElement(element, finalText, duration = 1100) {
+            return new Promise((resolve) => {
+                const length = finalText.length;
+                const startTime = performance.now();
+                let tickCounter = 0;
+
+                function update(now) {
+                    const elapsed = now - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const revealedCount = Math.floor(progress * length);
+
+                    let output = '';
+                    for (let i = 0; i < length; i++) {
+                        if (finalText[i] === ' ') {
+                            output += ' ';
+                        } else if (i < revealedCount) {
+                            output += finalText[i];
+                        } else {
+                            output += scrambleGlyphs[Math.floor(Math.random() * scrambleGlyphs.length)];
+                        }
+                    }
+
+                    element.textContent = output;
+                    tickCounter++;
+                    if (tickCounter % 4 === 0) {
+                        audio.playTick();
+                    }
+
+                    if (progress < 1) {
+                        requestAnimationFrame(update);
+                    } else {
+                        element.textContent = finalText;
+                        resolve();
+                    }
+                }
+
+                requestAnimationFrame(update);
+            });
+        }
+
+        async function startStage2() {
+            switchStage('s2');
+            startMatrix();
+            terminalOutput.innerHTML = '';
+
+            const lines = [
+                { text: `> Завантаження бурмалди... [100%]`, isError: false, delay: 400 },
+                { text: `> Закачка приколов і мємав ат автора... 77%`, isError: false, delay: 450 },
+                { text: `> Провірка на рєйджбайт і токсичність... чисто`, isError: false, delay: 500 },
+                { text: `> УВАГА: сервер двісті, пушта нє вивозіт!`, isError: true, delay: 1500 }
+            ];
+
+            for (const item of lines) {
+                const lineEl = document.createElement('div');
+                lineEl.className = 'term-line' + (item.isError ? ' error-line' : '');
+                terminalOutput.appendChild(lineEl);
+
+                if (item.isError) {
+                    audio.playError();
+                    appWrapper.classList.remove('screen-shake');
+                    void appWrapper.offsetWidth;
+                    appWrapper.classList.add('screen-shake');
+                }
+
+                await scrambleTextElement(lineEl, item.text, item.isError ? 1200 : 950);
+                await new Promise(r => setTimeout(r, item.delay));
+            }
+
+            switchStage('sAgeInput');
+        }
+
+        document.getElementById('submit-age-btn').addEventListener('click', () => {
+            const rawVal = document.getElementById('input-custom-age').value;
+            const enteredAge = parseInt(rawVal, 10);
+            const errorMsgEl = document.getElementById('age-error-msg');
+
+            if (isNaN(enteredAge)) {
+                errorMsgEl.textContent = "Введи нормальну цифру!";
+                audio.playError();
+                return;
+            }
+
+            if (enteredAge < 18) {
+                errorMsgEl.textContent = "фу малалєтка";
+                audio.playError();
+                appWrapper.classList.remove('screen-shake');
+                void appWrapper.offsetWidth;
+                appWrapper.classList.add('screen-shake');
+                return;
+            } else if (enteredAge > 18) {
+                errorMsgEl.textContent = "нє врі, жуй кашу дєтсадовец";
+                audio.playError();
+                appWrapper.classList.remove('screen-shake');
+                void appWrapper.offsetWidth;
+                appWrapper.classList.add('screen-shake');
+                return;
+            }
+
+            errorMsgEl.textContent = "";
+            CONFIG.age = 18;
+            applyConfigToDOM();
+            audio.playHit();
+            startMiniGame1();
+        });
+
+        const arenaAge = document.getElementById('arena-age');
+        const ageCounterBadge = document.getElementById('age-counter');
+        const easterEggOverlay = document.getElementById('easter-egg-overlay');
+        const closeEasterEggBtn = document.getElementById('close-easter-egg-btn');
+        let ageGameAnimId = null;
+        let ageEntities = [];
+        let caughtCount = 0;
+        let isEasterEggOpen = false;
+
+        function openEasterEgg() {
+            isEasterEggOpen = true;
+            audio.playError();
+            appWrapper.classList.remove('screen-shake');
+            void appWrapper.offsetWidth;
+            appWrapper.classList.add('screen-shake');
+            easterEggOverlay.classList.add('active');
+        }
+
+        function closeEasterEgg() {
+            isEasterEggOpen = false;
+            easterEggOverlay.classList.remove('active');
+            audio.playBeep(620, 0.08, 'sine', 0.15);
+        }
+
+        easterEggOverlay.addEventListener('click', closeEasterEgg);
+        closeEasterEggBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeEasterEgg();
+        });
+
+        const funnyMissMessages = [
+            "Ти шо, дедлайн? Шукай 18!",
+            "Паспорт покажи, несовершеннолітній!",
+            "Брат, ти переплутав кнопочки",
+            "Ауф, мімо каси",
+            "Типа взрослый? Лови 18!",
+            "Помилка: занадто багато крінжа, шукай 18",
+            "Мимо! Цілься в повноліття"
+        ];
+
+        function showToast(container, x, y, text, isSuccess = false) {
+            const toast = document.createElement('div');
+            toast.className = 'toast-msg' + (isSuccess ? ' success' : '');
+            toast.textContent = text;
+            toast.style.left = `${x}px`;
+            toast.style.top = `${y}px`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                if (toast.parentNode) toast.parentNode.removeChild(toast);
+            }, 1300);
+        }
+
+        function startMiniGame1() {
+            switchStage('s3_1');
+            arenaAge.innerHTML = '';
+            ageEntities = [];
+            caughtCount = 0;
+            isEasterEggOpen = false;
+            easterEggOverlay.classList.remove('active');
+            ageCounterBadge.textContent = `Зхоплено: 0 / 3`;
+
+            const target = CONFIG.age;
+            const mandatoryDecoys = [10, 99, 404, 1488].filter(n => n !== target);
+            const extraDecoys = [25, 69, 100, 228, 777, 1337, 5, 88].filter(n => n !== target);
+            
+            const numbersToSpawn = [
+                { val: target, isTarget: true },
+                { val: target, isTarget: true },
+                { val: target, isTarget: true }
+            ];
+
+            mandatoryDecoys.forEach(val => {
+                numbersToSpawn.push({ val, isTarget: false });
+            });
+
+            for (let i = 0; i < 5; i++) {
+                const decoy = extraDecoys[i % extraDecoys.length];
+                numbersToSpawn.push({ val: decoy, isTarget: false });
+            }
+
+            numbersToSpawn.sort(() => Math.random() - 0.5);
+
+            const rect = arenaAge.getBoundingClientRect();
+            const width = rect.width || 600;
+            const height = rect.height || 400;
+
+            numbersToSpawn.forEach((item) => {
+                const el = document.createElement('div');
+                el.className = 'floating-num';
+                el.textContent = item.val;
+                arenaAge.appendChild(el);
+
+                const elW = 64;
+                const elH = 50;
+                const entity = {
+                    el,
+                    val: item.val,
+                    isTarget: item.isTarget,
+                    x: Math.random() * Math.max(20, width - elW - 20) + 10,
+                    y: Math.random() * Math.max(20, height - elH - 20) + 10,
+                    vx: (Math.random() - 0.5) * 4.4,
+                    vy: (Math.random() - 0.5) * 4.4,
+                    active: true
+                };
+
+                if (Math.abs(entity.vx) < 1.3) entity.vx = entity.vx >= 0 ? 1.8 : -1.8;
+                if (Math.abs(entity.vy) < 1.3) entity.vy = entity.vy >= 0 ? 1.8 : -1.8;
+
+                el.addEventListener('pointerdown', (e) => {
+                    e.stopPropagation();
+                    if (!entity.active || isEasterEggOpen) return;
+
+                    const arenaRect = arenaAge.getBoundingClientRect();
+                    const clickX = e.clientX - arenaRect.left;
+                    const clickY = e.clientY - arenaRect.top;
+
+                    if (entity.isTarget) {
+                        entity.active = false;
+                        el.style.display = 'none';
+                        caughtCount++;
+                        ageCounterBadge.textContent = `Зхоплено: ${caughtCount} / 3`;
+                        audio.playHit();
+                        showToast(arenaAge, clickX, clickY, `Є! +1 (${caughtCount}/3)`, true);
+
+                        if (caughtCount >= 3) {
+                            cancelAnimationFrame(ageGameAnimId);
+                            setTimeout(() => {
+                                startMiniGame2();
+                            }, 650);
+                        }
+                    } else if (entity.val === 1488) {
+                        openEasterEgg();
+                        entity.vx = -entity.vx;
+                        entity.vy = -entity.vy;
+                    } else {
+                        audio.playMiss();
+                        const msg = funnyMissMessages[Math.floor(Math.random() * funnyMissMessages.length)];
+                        showToast(arenaAge, clickX, clickY, msg, false);
+                        entity.vx = -entity.vx * 1.2;
+                        entity.vy = -entity.vy * 1.2;
+                    }
+                });
+
+                ageEntities.push(entity);
+            });
+
+            function updateAgeArena() {
+                if (!isEasterEggOpen) {
+                    const bounds = arenaAge.getBoundingClientRect();
+                    const maxW = bounds.width;
+                    const maxH = bounds.height;
+
+                    ageEntities.forEach(ent => {
+                        if (!ent.active) return;
+                        const w = ent.el.offsetWidth || 64;
+                        const h = ent.el.offsetHeight || 50;
+
+                        ent.x += ent.vx;
+                        ent.y += ent.vy;
+
+                        if (ent.x <= 4) {
+                            ent.x = 4;
+                            ent.vx = Math.abs(ent.vx);
+                        } else if (ent.x + w >= maxW - 4) {
+                            ent.x = maxW - w - 4;
+                            ent.vx = -Math.abs(ent.vx);
+                        }
+
+                        if (ent.y <= 4) {
+                            ent.y = 4;
+                            ent.vy = Math.abs(ent.vy);
+                        } else if (ent.y + h >= maxH - 4) {
+                            ent.y = maxH - h - 4;
+                            ent.vy = -Math.abs(ent.vy);
+                        }
+
+                        ent.el.style.transform = `translate3d(${ent.x}px, ${ent.y}px, 0)`;
+                    });
+                }
+
+                ageGameAnimId = requestAnimationFrame(updateAgeArena);
+            }
+
+            ageGameAnimId = requestAnimationFrame(updateAgeArena);
+        }
+
+        const charismaBar = document.getElementById('charisma-bar');
+        const charismaPercent = document.getElementById('charisma-percent');
+        const charismaStatus = document.getElementById('charisma-status');
+        const charismaBtn = document.getElementById('charisma-btn');
+        const evasiveArea = document.getElementById('evasive-area');
+        let charismaVal = 0;
+        let charismaDecayInterval = null;
+        let charismaCompleted = false;
+
+        function moveCharismaButton() {
+            const areaRect = evasiveArea.getBoundingClientRect();
+            const btnW = charismaBtn.offsetWidth || 180;
+            const btnH = charismaBtn.offsetHeight || 54;
+            const padX = Math.max(btnW / 2 + 12, 95);
+            const padY = Math.max(btnH / 2 + 12, 35);
+            const minX = padX;
+            const maxX = Math.max(minX + 10, areaRect.width - padX);
+            const minY = padY;
+            const maxY = Math.max(minY + 10, areaRect.height - padY);
+            const nextX = minX + Math.random() * (maxX - minX);
+            const nextY = minY + Math.random() * (maxY - minY);
+
+            charismaBtn.style.left = `${nextX}px`;
+            charismaBtn.style.top = `${nextY}px`;
+        }
+
+        function updateCharismaUI() {
+            const clamped = Math.max(0, Math.min(100, Math.round(charismaVal)));
+            charismaBar.style.width = `${clamped}%`;
+            charismaPercent.textContent = `${clamped}%`;
+        }
+
+        function startMiniGame2() {
+            switchStage('s3_2');
+            charismaVal = 15;
+            charismaCompleted = false;
+            charismaStatus.textContent = 'НЕСТАБІЛЬНО';
+            charismaStatus.style.background = 'var(--blue-main)';
+            charismaBtn.style.left = '50%';
+            charismaBtn.style.top = '50%';
+            updateCharismaUI();
+
+            if (charismaDecayInterval) clearInterval(charismaDecayInterval);
+
+            charismaDecayInterval = setInterval(() => {
+                if (charismaCompleted) return;
+                if (charismaVal > 5) {
+                    charismaVal -= 1.2;
+                    updateCharismaUI();
+                }
+            }, 100);
+        }
+
+        charismaBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            if (charismaCompleted) return;
+
+            charismaVal += 18;
+            audio.playBeep(500 + charismaVal * 6, 0.09, 'sine', 0.22);
+            updateCharismaUI();
+
+            if (charismaVal >= 100) {
+                charismaCompleted = true;
+                clearInterval(charismaDecayInterval);
+                charismaStatus.textContent = '100% ПІДТВЕРДЖЕНО';
+                charismaStatus.style.background = '#38bdf8';
+                audio.playHit();
+
+                setTimeout(() => {
+                    startFinalStage();
+                }, 600);
+            } else {
+                moveCharismaButton();
+            }
+        });
+
+        const confettiCanvas = document.getElementById('confetti-canvas');
+        const cCtx = confettiCanvas.getContext('2d');
+        let confettiParticles = [];
+        let confettiAnimId = null;
+
+        function launchConfetti() {
+            confettiCanvas.width = window.innerWidth;
+            confettiCanvas.height = window.innerHeight;
+            confettiParticles = [];
+
+            const colors = ['#00f0ff', '#70d6ff', '#38bdf8', '#ffffff', '#1e3a8a'];
+            for (let i = 0; i < 110; i++) {
+                confettiParticles.push({
+                    x: Math.random() * confettiCanvas.width,
+                    y: Math.random() * confettiCanvas.height - confettiCanvas.height,
+                    w: Math.random() * 10 + 5,
+                    h: Math.random() * 6 + 4,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    vx: (Math.random() - 0.5) * 3,
+                    vy: Math.random() * 3.5 + 2,
+                    angle: Math.random() * 360,
+                    spin: (Math.random() - 0.5) * 8
+                });
+            }
+
+            function renderConfetti() {
+                cCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+                confettiParticles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.angle += p.spin;
+
+                    if (p.y > confettiCanvas.height + 20) {
+                        p.y = -20;
+                        p.x = Math.random() * confettiCanvas.width;
+                    }
+
+                    cCtx.save();
+                    cCtx.translate(p.x, p.y);
+                    cCtx.rotate((p.angle * Math.PI) / 180);
+                    cCtx.fillStyle = p.color;
+                    cCtx.shadowColor = p.color;
+                    cCtx.shadowBlur = 8;
+                    cCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                    cCtx.restore();
+                });
+
+                confettiAnimId = requestAnimationFrame(renderConfetti);
+            }
+
+            if (confettiAnimId) cancelAnimationFrame(confettiAnimId);
+            renderConfetti();
+        }
+
+        function startFinalStage() {
+            applyConfigToDOM();
+            switchStage('s4');
+            audio.playVictory();
+            launchConfetti();
+        }
+
+        const gameAudioEl = document.getElementById('game-audio');
+        const giftIntroView = document.getElementById('gift-intro-view');
+        const shellGameView = document.getElementById('shell-game-view');
+        const shellFailView = document.getElementById('shell-fail-view');
+        const tgDeliveryView = document.getElementById('tg-delivery-view');
+        const playGiftBtn = document.getElementById('play-gift-btn');
+        const shellStatus = document.getElementById('shell-status');
+        const cupsStage = document.getElementById('cups-stage');
+        const retryShellBtn = document.getElementById('retry-shell-btn');
+        const toGiftStageBtn = document.getElementById('to-gift-stage-btn');
+
+        let shellCanPick = false;
+        let winningCupId = 0;
+        let isSwappingDuringAudio = false;
+        let activeSwapInterval = null;
+
+        toGiftStageBtn.addEventListener('click', () => {
+            if (confettiAnimId) cancelAnimationFrame(confettiAnimId);
+            cCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            startGiftStageIntro();
+        });
+
+        function startGiftStageIntro() {
+            giftIntroView.style.display = 'flex';
+            shellGameView.style.display = 'none';
+            shellFailView.style.display = 'none';
+            tgDeliveryView.style.display = 'none';
+            switchStage('s5');
+            audio.playBeep(780, 0.1, 'sine', 0.2);
+        }
+
+        playGiftBtn.addEventListener('click', () => {
+            audio.init();
+            giftIntroView.style.display = 'none';
+            shellFailView.style.display = 'none';
+            tgDeliveryView.style.display = 'none';
+            shellGameView.style.display = 'flex';
+            shellCanPick = false;
+            cupsStage.innerHTML = '';
+
+            winningCupId = Math.floor(Math.random() * 3);
+            const cupObjects = [];
+            let winningPrizeImg = null;
+
+            for (let i = 0; i < 3; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'cup-slot';
+                slot.style.left = cupSlotPositions[i];
+
+                if (i === winningCupId) {
+                    const prizeImg = document.createElement('img');
+                    prizeImg.className = 'prize-item';
+                    prizeImg.src = 'https://cdn.pixabay.com/photo/2019/12/16/15/47/vector-4699584_960_720.png';
+                    prizeImg.alt = 'Схований подарок';
+                    prizeImg.onerror = function () {
+                        this.src = 'https://placehold.co/120x120/0a0f1e/00f0ff?text=%F0%9F%8E%81';
+                    };
+                    slot.appendChild(prizeImg);
+                    winningPrizeImg = prizeImg;
+                }
+
+                const cupEl = document.createElement('div');
+                cupEl.className = 'cyber-cup';
+                cupEl.innerHTML = `
+                    <div class="cup-stripe"></div>
+                    <div class="cup-stripe" style="margin-top: 24px;"></div>
+                `;
+                slot.appendChild(cupEl);
+                cupsStage.appendChild(slot);
+
+                const cupObj = {
+                    id: i,
+                    slotPos: i,
+                    slotEl: slot,
+                    cupEl: cupEl
+                };
+
+                slot.addEventListener('click', () => {
+                    handleCupChoice(cupObj, winningPrizeImg, cupObjects);
+                });
+
+                cupObjects.push(cupObj);
+            }
+
+            shellStatus.textContent = 'Ось де подарунок на початку! Запам\'ятовуй...';
+
+            cupObjects[winningCupId].cupEl.classList.add('lifted');
+            audio.playBeep(740, 0.14, 'sine', 0.22);
+
+            setTimeout(() => {
+                cupObjects[winningCupId].cupEl.classList.remove('lifted');
+                if (winningPrizeImg) winningPrizeImg.style.visibility = 'hidden';
+                audio.playBeep(520, 0.12, 'sine', 0.2);
+
+                setTimeout(() => {
+                    shellStatus.textContent = 'Звучить трек: стакани тусуються...';
+
+                    isSwappingDuringAudio = true;
+                    try {
+                        gameAudioEl.currentTime = 0;
+                        gameAudioEl.play().catch(() => {});
+                    } catch (e) {}
+
+                    let lastPairKey = '';
+                    activeSwapInterval = setInterval(() => {
+                        if (!isSwappingDuringAudio) return;
+
+                        let idxA = Math.floor(Math.random() * 3);
+                        let idxB = (idxA + 1 + Math.floor(Math.random() * 2)) % 3;
+                        const pairKey = [idxA, idxB].sort().join('-');
+
+                        if (pairKey === lastPairKey) {
+                            idxB = (idxB + 1) % 3;
+                            if (idxB === idxA) idxB = (idxA + 1) % 3;
+                        }
+                        lastPairKey = [idxA, idxB].sort().join('-');
+
+                        const cupA = cupObjects[idxA];
+                        const cupB = cupObjects[idxB];
+
+                        const tempPos = cupA.slotPos;
+                        cupA.slotPos = cupB.slotPos;
+                        cupB.slotPos = tempPos;
+
+                        cupA.slotEl.style.zIndex = '4';
+                        cupB.slotEl.style.zIndex = '2';
+
+                        cupA.slotEl.style.left = cupSlotPositions[cupA.slotPos];
+                        cupB.slotEl.style.left = cupSlotPositions[cupB.slotPos];
+
+                        audio.playBeep(450 + Math.random() * 200, 0.05, 'triangle', 0.08);
+                    }, 420);
+
+                    gameAudioEl.onended = () => {
+                        stopAudioSwapping(cupObjects);
+                    };
+
+                    setTimeout(() => {
+                        if (isSwappingDuringAudio) {
+                            stopAudioSwapping(cupObjects);
+                        }
+                    }, 9000);
+
+                }, 800);
+            }, 1200);
+        });
+
+        function stopAudioSwapping(cupObjects) {
+            if (!isSwappingDuringAudio) return;
+            isSwappingDuringAudio = false;
+            clearInterval(activeSwapInterval);
+
+            shellStatus.textContent = 'Вибери стакан, під яким лежить подарок!';
+            shellCanPick = true;
+
+            cupObjects.forEach(c => {
+                c.slotEl.classList.add('clickable');
+                c.slotEl.style.cursor = 'pointer';
+                c.cupEl.style.cursor = 'pointer';
+            });
+        }
+
+        const cupSlotPositions = ['4%', '35%', '66%'];
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function playTelegramPhoneAnimation() {
+            shellGameView.style.display = 'none';
+            tgDeliveryView.style.display = 'flex';
+
+            audio.playBeep(680, 0.15, 'sine', 0.25);
+            await sleep(1800);
+            audio.playVictory();
+            await sleep(2000);
+
+            tgDeliveryView.style.display = 'none';
+            startAuthorRatingStage();
+        }
+
+        async function handleCupChoice(chosenCup, winningPrizeImg, cupObjects) {
+            if (!shellCanPick) return;
+            shellCanPick = false;
+
+            cupObjects.forEach(c => c.slotEl.classList.remove('clickable'));
+            if (winningPrizeImg) winningPrizeImg.style.visibility = 'visible';
+            chosenCup.cupEl.classList.add('lifted');
+
+            if (chosenCup.id === winningCupId) {
+                shellStatus.textContent = 'Є! Успішно знайдено!';
+                audio.playHit();
+                await sleep(1050);
+                await playTelegramPhoneAnimation();
+            } else {
+                shellStatus.textContent = 'ПУСТО...';
+                audio.playError();
+                appWrapper.classList.remove('screen-shake');
+                void appWrapper.offsetWidth;
+                appWrapper.classList.add('screen-shake');
+
+                await sleep(850);
+                shellGameView.style.display = 'none';
+                shellFailView.style.display = 'flex';
+            }
+        }
+
+        retryShellBtn.addEventListener('click', () => {
+            audio.playBeep(660, 0.1, 'sine', 0.2);
+            startGiftStageIntro();
+        });
+
+        const crit1 = document.getElementById('crit-1');
+        const crit2 = document.getElementById('crit-2');
+        const crit3 = document.getElementById('crit-3');
+        const valCrit1 = document.getElementById('val-crit-1');
+        const valCrit2 = document.getElementById('val-crit-2');
+        const valCrit3 = document.getElementById('val-crit-3');
+        const negativeOverlay = document.getElementById('negative-rating-overlay');
+
+        crit1.addEventListener('input', () => { valCrit1.textContent = crit1.value + '/100'; });
+        crit2.addEventListener('input', () => { valCrit2.textContent = crit2.value + '/100'; });
+        crit3.addEventListener('input', () => { valCrit3.textContent = crit3.value + '/100'; });
+
+        function startAuthorRatingStage() {
+            switchStage('sAuthorRating');
+            audio.playBeep(820, 0.1, 'triangle', 0.2);
+        }
+
+        document.getElementById('submit-rating-btn').addEventListener('click', () => {
+            const v1 = parseInt(crit1.value, 10);
+            const v2 = parseInt(crit2.value, 10);
+            const v3 = parseInt(crit3.value, 10);
+
+            if (v1 < 100 || v2 < 100 || v3 < 100) {
+                audio.playError();
+                appWrapper.classList.remove('screen-shake');
+                void appWrapper.offsetWidth;
+                appWrapper.classList.add('screen-shake');
+                negativeOverlay.style.display = 'flex';
+            } else {
+                audio.playHit();
+                startFinalOfflineStage();
+            }
+        });
+
+        document.getElementById('close-negative-btn').addEventListener('click', () => {
+            negativeOverlay.style.display = 'none';
+            audio.playBeep(620, 0.08, 'sine', 0.15);
+        });
+
+        let offlineCountdownInterval = null;
+        const TARGET_DATE = new Date(2027, 10, 21, 0, 0, 0).getTime();
+
+        function updateOfflineCountdown() {
+            const now = Date.now();
+            const diff = Math.max(0, TARGET_DATE - now);
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+            const minutes = Math.floor((diff / (1000 * 60)) % 60);
+            const seconds = Math.floor((diff / 1000) % 60);
+
+            document.getElementById('cd-days').textContent = String(days).padStart(3, '0');
+            document.getElementById('cd-hours').textContent = String(hours).padStart(2, '0');
+            document.getElementById('cd-minutes').textContent = String(minutes).padStart(2, '0');
+            document.getElementById('cd-seconds').textContent = String(seconds).padStart(2, '0');
+        }
+
+        function startFinalOfflineStage() {
+            switchStage('s6');
+            audio.playVictory();
+            updateOfflineCountdown();
+            if (offlineCountdownInterval) clearInterval(offlineCountdownInterval);
+            offlineCountdownInterval = setInterval(updateOfflineCountdown, 1000);
+        }
+
+        function resetEntireProtocol() {
+            if (introTimer) clearTimeout(introTimer);
+            if (confettiAnimId) cancelAnimationFrame(confettiAnimId);
+            if (offlineCountdownInterval) clearInterval(offlineCountdownInterval);
+            if (activeSwapInterval) clearInterval(activeSwapInterval);
+            cCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            stopMatrix();
+            isRunning = false;
+            isSwappingDuringAudio = false;
+            CONFIG.age = 18;
+            applyConfigToDOM();
+            document.getElementById('age-error-msg').textContent = "";
+            switchStage('s1');
+            window.dispatchEvent(new Event('DOMContentLoaded'));
+        }
+
+        document.getElementById('full-restart-btn').addEventListener('click', resetEntireProtocol);
+    </script>
+</body>
+</html>
